@@ -6,7 +6,7 @@ echo Menyiapkan Sistem...
 echo.
 
 :: Menjalankan script python utama
-python main.py
+.venv\Scripts\python.exe main.py
 
 echo.
 :: Pause digunakan agar jendela CMD tidak langsung hilang setelah proses PDF selesai, 

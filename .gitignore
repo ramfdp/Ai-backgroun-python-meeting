@@ -1,0 +1,5 @@
+.env
+Hasil_Notulensi/
+__pycache__/
+.venv/
+.wav

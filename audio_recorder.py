@@ -7,7 +7,7 @@ import queue
 def record_audio_manual(filename="temp_meeting.wav"):
     sample_rate = 16000 
     channels = 1        
-    chunk_size = 4000   # Merekam per 0.25 detik agar sinkron dan ringan
+    chunk_size = 4000   
     
     try:
         # 1. Siapkan jalur Loopback (Suara dari GMeet/layar untuk teman meeting)
@@ -60,14 +60,8 @@ def record_audio_manual(filename="temp_meeting.wav"):
                 data_a = q_asli.get()     # Suara mentah Anda (Microphone)
 
                 # --- FITUR AUDIO AMPLIFIER (PENGUAT VOLUME) ---
-                # Kalikan data suara Anda agar volumenya naik. 
-                # Angka 4.0 berarti volume mic Anda dibesarkan 400%.
-                # Anda bisa mengubah angka ini (misal 3.0 atau 5.0) sesuai kebutuhan.
-                pengali_volume_mic = 4.0 
-                data_a_diperbesar = data_a * pengali_volume_mic
-
-                # 2. MIXING AUDIO: Menjumlahkan gelombang suara
-                mixed_data = data_l + data_a_diperbesar
+                # ponytail: inline volume multiplier and mixing
+                mixed_data = data_l + (data_a * 4.0)
                 
                 # 3. NORMALISASI (Clipping)
                 # Mencegah suara pecah (distorsi) jika Anda tertawa keras
