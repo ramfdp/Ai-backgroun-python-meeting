@@ -3,8 +3,20 @@ from datetime import datetime
 from gemini_processor import process_meeting_audio
 from pdf_generator import save_to_pdf
 
-# ponytail: raw input, no boilerplate CLI args
-audio_file = input("Masukkan path file audio (contoh: C:\\path\\ke\\audio.wav): ").strip('\"\' ')
+import tkinter as tk
+from tkinter import filedialog
+
+print("Membuka jendela untuk memilih file...")
+root = tk.Tk()
+root.withdraw()
+audio_file = filedialog.askopenfilename(
+    title="Pilih file audio", 
+    filetypes=[("Audio Files", "*.wav *.mp3 *.m4a *.flac *.ogg"), ("All Files", "*.*")]
+)
+
+if not audio_file:
+    print("❌ Batal memilih file.")
+    exit()
 
 if os.path.exists(audio_file):
     print("\n⏳ Sedang memproses dengan Gemini AI...")

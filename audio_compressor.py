@@ -1,0 +1,64 @@
+import noisereduce as nr
+import librosa
+from pydub import AudioSegment
+from pydub.effects import normalize
+import numpy as np
+
+import os
+from datetime import datetime
+import tkinter as tk
+from tkinter import filedialog
+from gemini_processor import process_meeting_audio
+from pdf_generator import save_to_pdf
+
+def tingkatkan_vokal_dan_simpan(file_input, file_output):
+    print("1. Membaca file audio...")
+    y, sr = librosa.load(file_input, sr=None)
+
+    print("2. Membersihkan background noise...")
+    audio_bersih = nr.reduce_noise(y=y, sr=sr, prop_decrease=0.90)
+
+    print("3. Memproses audio...")
+    audio_int = (audio_bersih * 32767).astype(np.int16)
+    sound = AudioSegment(
+        audio_int.tobytes(),
+        frame_rate=sr,
+        sample_width=audio_int.dtype.itemsize,
+        channels=1,
+    )
+
+    print("4. Tuning: Melakukan dorongan pada Vokal (EQ & Normalization)...")
+    sound = sound.high_pass_filter(200)
+    sound = sound.low_pass_filter(10000)
+    sound = normalize(sound)
+
+    print("5. Menyimpan ke format MP3...")
+    sound.export(file_output, format="mp3", bitrate="192k")
+    print(f"🎉 Selesai! Audio dengan vokal tebal dan jelas tersimpan di: {file_output}")
+
+
+if __name__ == "__main__":
+    # ponytail: File dialog and direct upload integration, no extra classes
+    print("Membuka jendela untuk memilih file...")
+    root = tk.Tk()
+    root.withdraw()
+    file_rekaman_hp = filedialog.askopenfilename(
+        title="Pilih file audio", 
+        filetypes=[("Audio Files", "*.wav *.mp3 *.m4a *.flac *.ogg"), ("All Files", "*.*")]
+    )
+
+    if not file_rekaman_hp:
+        print("❌ Batal memilih file.")
+        exit()
+
+    hasil_vokal_jelas = "output-sound.mp3"
+    tingkatkan_vokal_dan_simpan(file_rekaman_hp, hasil_vokal_jelas)
+
+    print("\n⏳ Sedang memproses dengan Gemini AI...")
+    hasil_ai = process_meeting_audio(hasil_vokal_jelas)
+    
+    os.makedirs("Hasil_Notulensi", exist_ok=True)
+    pdf_path = os.path.join("Hasil_Notulensi", f"Meeting_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
+    save_to_pdf(hasil_ai, filename=pdf_path)
+    
+    print(f"\n✅ PROSES SELESAI!\nFile PDF Anda berhasil disimpan di:\n-> {os.path.abspath(pdf_path)}")
