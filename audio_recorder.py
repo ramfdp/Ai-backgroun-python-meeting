@@ -10,17 +10,13 @@ def record_audio_manual(filename="temp_meeting.wav"):
     chunk_size = 4000   
     
     try:
-        # 1. Siapkan jalur Loopback (Suara dari GMeet/layar untuk teman meeting)
         default_speaker = sc.default_speaker()
-        mic_loopback = sc.get_microphone(id=str(default_speaker.name), include_loopback=True)
-        
-        # 2. Siapkan jalur Asli (Microphone fisik untuk suara Anda)
-        mic_asli = sc.default_microphone()
+        mic_loopback = sc.get_microphone(id=str(default_speaker.name), include_loopback=True) #loopback = suara orang lain
+        mic_asli = sc.default_microphone() #suara anda
     except Exception as e:
         print(f"[ERROR] Gagal mendeteksi perangkat audio: {e}")
         return False
 
-    # Antrean (Queue) untuk menampung sinyal suara dari kedua jalur
     q_loopback = queue.Queue()
     q_asli = queue.Queue()
     
@@ -40,7 +36,6 @@ def record_audio_manual(filename="temp_meeting.wav"):
                 data = rec.record(numframes=chunk_size)
                 q_asli.put(data)
 
-    # Mulai menjalankan kedua thread secara paralel
     t1 = threading.Thread(target=record_loopback)
     t2 = threading.Thread(target=record_asli)
     t1.start()
@@ -52,30 +47,20 @@ def record_audio_manual(filename="temp_meeting.wav"):
     print("==================================================")
 
     try:
-        # Buka file untuk ditulis secara streaming
         with sf.SoundFile(filename, mode='w', samplerate=sample_rate, channels=channels) as file:
             while True:
-                # 1. Ambil potongan gelombang suara dari kedua antrean
-                data_l = q_loopback.get() # Suara teman (Gmeet)
-                data_a = q_asli.get()     # Suara mentah Anda (Microphone)
+                data_l = q_loopback.get()
+                data_a = q_asli.get()     
 
-                # --- FITUR AUDIO AMPLIFIER (PENGUAT VOLUME) ---
-                # ponytail: inline volume multiplier and mixing
                 mixed_data = data_l + (data_a * 4.0)
                 
-                # 3. NORMALISASI (Clipping)
-                # Mencegah suara pecah (distorsi) jika Anda tertawa keras
-                # karena volume sudah dikali 4.
                 mixed_data = np.clip(mixed_data, -1.0, 1.0)
-
-                # Tulis hasil campuran ke hardisk
                 file.write(mixed_data)
 
     except KeyboardInterrupt:
         print("\n[OK] Perekaman dihentikan manual oleh Anda.")
-        is_recording = False # Kirim sinyal mati ke dalam thread
+        is_recording = False 
         
-        # Tunggu kedua thread menyelesaikan sisa antreannya (Graceful Shutdown)
         t1.join()
         t2.join()
         return True
