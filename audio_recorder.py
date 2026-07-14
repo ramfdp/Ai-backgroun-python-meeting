@@ -3,6 +3,10 @@ import soundfile as sf
 import numpy as np
 import threading
 import queue
+import keyboard # ponytail: minimal dependency for global 'esc' detection
+import warnings # ponytail: suppress annoying soundcard warnings
+
+warnings.filterwarnings("ignore", message="data discontinuity in recording")
 
 def record_audio_manual(filename="temp_meeting.wav"):
     sample_rate = 16000 
@@ -43,12 +47,15 @@ def record_audio_manual(filename="temp_meeting.wav"):
 
     print("==================================================")
     print("🔴 REKAMAN MEETING DIMULAI (Mode: Mic + Speaker)")
-    print("Tekan CTRL + C pada keyboard untuk BERHENTI merekam")
+    print("Tekan ESC atau CTRL + C pada keyboard untuk BERHENTI merekam")
     print("==================================================")
 
     try:
         with sf.SoundFile(filename, mode='w', samplerate=sample_rate, channels=channels) as file:
             while True:
+                if keyboard.is_pressed('esc'):
+                    raise KeyboardInterrupt
+
                 data_l = q_loopback.get()
                 data_a = q_asli.get()     
 
@@ -56,6 +63,12 @@ def record_audio_manual(filename="temp_meeting.wav"):
                 
                 mixed_data = np.clip(mixed_data, -1.0, 1.0)
                 file.write(mixed_data)
+
+                # ponytail: simple inline log, no extra libs
+                if np.max(np.abs(mixed_data)) > 0.05:
+                    print("🔊 Suara terdeteksi...  ", end="\r", flush=True)
+                else:
+                    print("⏳ Menunggu suara...    ", end="\r", flush=True)
 
     except KeyboardInterrupt:
         print("\n[OK] Perekaman dihentikan manual oleh Anda.")

@@ -4,3 +4,4 @@ soundcard
 soundfile
 numpy
 fpdf2
+keyboard
