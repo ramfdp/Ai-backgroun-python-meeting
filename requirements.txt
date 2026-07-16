@@ -5,3 +5,4 @@ soundfile
 numpy
 fpdf2
 keyboard
+pydub

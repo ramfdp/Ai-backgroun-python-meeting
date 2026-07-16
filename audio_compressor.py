@@ -14,7 +14,7 @@ from pdf_generator import save_to_pdf
 
 def tingkatkan_vokal_dan_simpan(file_input, file_output):
     print("1. Membaca file audio...")
-    y, sr = librosa.load(file_input, sr=None)
+    y, sr = librosa.load(file_input, sr=16000)  # ponytail: 16kHz mono is enough for speech
 
     print("2. Membersihkan background noise...")
     audio_bersih = nr.reduce_noise(y=y, sr=sr, prop_decrease=0.90)
