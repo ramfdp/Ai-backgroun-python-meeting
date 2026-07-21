@@ -3,6 +3,7 @@ from datetime import datetime
 from audio_recorder import record_audio_manual
 from gemini_processor import process_meeting_audio
 from pdf_generator import save_to_pdf
+from word_generator import export_to_word
 
 def main():
     output_folder = "Hasil_Notulensi"
@@ -46,8 +47,14 @@ def main():
     try:
         save_to_pdf(hasil_ai, filename=path_pdf_lengkap)
         absolute_path = os.path.abspath(path_pdf_lengkap)
+        
+        path_word_lengkap = os.path.join(output_folder, f"Meeting_{timestamp}.docx")
+        export_to_word(hasil_ai, filename=path_word_lengkap)
+        absolute_path_word = os.path.abspath(path_word_lengkap)
+        
         print("\n✅ PROSES SELESAI!")
         print(f"File PDF Anda berhasil disimpan di:\n-> {absolute_path}")
+        print(f"File Word Anda berhasil disimpan di:\n-> {absolute_path_word}")
         print(f"(Backup teks juga tersedia di: {os.path.abspath(path_txt_lengkap)})")
     except Exception as e:
         absolute_path_txt = os.path.abspath(path_txt_lengkap)

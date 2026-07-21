@@ -7,7 +7,7 @@ from google import genai
 from pydub import AudioSegment
 from prompts import MEETING_PROMPT, TRANSCRIBE_PROMPT, SUMMARIZE_PROMPT
 
-GEMINI_API_KEY = "AIzaSyBjTZbEyV4Sta8AQ5Pve4LPlYX_EHaAjnE"
+GEMINI_API_KEY = "AIzaSyACr9RVPsWbJF5i2iiVWiQ6TKZtX0WmSqQ"
 client = genai.Client(api_key=GEMINI_API_KEY)
 CHUNK_MS = 15 * 60 * 1000  
 
@@ -16,7 +16,7 @@ def _call_gemini(contents):
     """Call Gemini with model fallback on 503."""
     for attempt in range(3):
         try:
-            model = "gemini-2.5-flash" if attempt == 0 else "gemini-2-flash"
+            model = "gemini-2.5-flash" if attempt == 0 else "gemini-3-flash-preview"
             if attempt > 0:
                 print(f"🔄 Beralih ke model fallback: {model}")
             response = client.models.generate_content(
