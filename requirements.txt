@@ -6,3 +6,5 @@ numpy
 fpdf2
 keyboard
 pydub
+python-docx
+pypdf

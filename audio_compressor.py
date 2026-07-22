@@ -1,8 +1,8 @@
-
+import sys
 import noisereduce as nr
-import librosa
 from pydub import AudioSegment
 from pydub.effects import normalize
+from pydub import utils as pydub_utils
 import numpy as np
 import os
 from datetime import datetime
@@ -13,9 +13,26 @@ from pdf_generator import save_to_pdf
 from word_generator import export_to_word
 
 
+def _setup_ffmpeg():
+    # ponytail: point pydub at bundled ffmpeg when running as .exe
+    if getattr(sys, 'frozen', False):
+        ffmpeg_dir = os.path.join(sys._MEIPASS, 'ffmpeg_bin')
+    else:
+        ffmpeg_dir = os.path.join(os.path.dirname(__file__), 'ffmpeg_bin')
+    ffmpeg_path = os.path.join(ffmpeg_dir, 'ffmpeg.exe')
+    if os.path.isfile(ffmpeg_path):
+        pydub_utils.FFMPEG_PATH = ffmpeg_path
+        AudioSegment.converter = ffmpeg_path
+
+_setup_ffmpeg()
+
+
 def tingkatkan_vokal_dan_simpan(file_input, file_output):
     print("1. Membaca file audio...")
-    y, sr = librosa.load(file_input, sr=16000)  # ponytail: 16kHz mono is enough for speech
+    # ponytail: pydub replaces librosa.load — no external audioread/ffmpeg path needed
+    seg = AudioSegment.from_file(file_input).set_frame_rate(16000).set_channels(1).set_sample_width(2)
+    y = np.array(seg.get_array_of_samples(), dtype=np.float32) / 32768.0
+    sr = seg.frame_rate
 
     print("2. Membersihkan background noise...")
     audio_bersih = nr.reduce_noise(y=y, sr=sr, prop_decrease=0.90)
