@@ -1,4 +1,22 @@
 import os
+import sys
+
+for stream in (sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(errors="replace")
+
+# ponytail: set ffmpeg+ffprobe globally before any pydub import
+def _setup_ffmpeg():
+    if getattr(sys, 'frozen', False):
+        ffdir = os.path.join(sys._MEIPASS, 'ffmpeg_bin')
+    else:
+        ffdir = os.path.join(os.path.dirname(__file__), 'ffmpeg_bin')
+    for name in ('ffmpeg.exe', 'ffprobe.exe'):
+        if os.path.isfile(os.path.join(ffdir, name)):
+            os.environ['PATH'] = ffdir + os.pathsep + os.environ.get('PATH', '')
+            break
+
+_setup_ffmpeg()
 
 from main import main as jalankan_rekaman
 from upload import upload_audio as jalankan_upload

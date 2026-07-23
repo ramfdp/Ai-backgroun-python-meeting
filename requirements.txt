@@ -6,5 +6,6 @@ numpy
 fpdf2
 keyboard
 pydub
+noisereduce
 python-docx
 pypdf

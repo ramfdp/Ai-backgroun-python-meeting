@@ -2,7 +2,6 @@ import sys
 import noisereduce as nr
 from pydub import AudioSegment
 from pydub.effects import normalize
-from pydub import utils as pydub_utils
 import numpy as np
 import os
 from datetime import datetime
@@ -11,20 +10,6 @@ from tkinter import filedialog
 from gemini_processor import process_meeting_audio
 from pdf_generator import save_to_pdf
 from word_generator import export_to_word
-
-
-def _setup_ffmpeg():
-    # ponytail: point pydub at bundled ffmpeg when running as .exe
-    if getattr(sys, 'frozen', False):
-        ffmpeg_dir = os.path.join(sys._MEIPASS, 'ffmpeg_bin')
-    else:
-        ffmpeg_dir = os.path.join(os.path.dirname(__file__), 'ffmpeg_bin')
-    ffmpeg_path = os.path.join(ffmpeg_dir, 'ffmpeg.exe')
-    if os.path.isfile(ffmpeg_path):
-        pydub_utils.FFMPEG_PATH = ffmpeg_path
-        AudioSegment.converter = ffmpeg_path
-
-_setup_ffmpeg()
 
 
 def tingkatkan_vokal_dan_simpan(file_input, file_output):

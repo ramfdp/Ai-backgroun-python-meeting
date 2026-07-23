@@ -16,7 +16,7 @@ def _call_gemini(contents):
     """Call Gemini with model fallback on 503."""
     for attempt in range(3):
         try:
-            model = "gemini-2.5-pro" if attempt == 0 else "gemini-3-flash"
+            model = "gemini-2.5-pro" if attempt == 0 else "gemini-2.5-flash"
             if attempt > 0:
                 print(f"🔄 Beralih ke model fallback: {model}")
             response = client.models.generate_content(
