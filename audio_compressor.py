@@ -14,7 +14,6 @@ from word_generator import export_to_word
 
 def tingkatkan_vokal_dan_simpan(file_input, file_output):
     print("1. Membaca file audio...")
-    # ponytail: pydub replaces librosa.load — no external audioread/ffmpeg path needed
     seg = AudioSegment.from_file(file_input).set_frame_rate(16000).set_channels(1).set_sample_width(2)
     y = np.array(seg.get_array_of_samples(), dtype=np.float32) / 32768.0
     sr = seg.frame_rate

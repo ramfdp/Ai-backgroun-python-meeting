@@ -5,3 +5,6 @@ __pycache__/
 .wav
 .ico
 ffmpeg_bin/
+dist/
+build/
+.spec

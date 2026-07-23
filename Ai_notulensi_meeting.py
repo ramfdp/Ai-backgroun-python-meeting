@@ -11,10 +11,16 @@ def _setup_ffmpeg():
         ffdir = os.path.join(sys._MEIPASS, 'ffmpeg_bin')
     else:
         ffdir = os.path.join(os.path.dirname(__file__), 'ffmpeg_bin')
-    for name in ('ffmpeg.exe', 'ffprobe.exe'):
-        if os.path.isfile(os.path.join(ffdir, name)):
-            os.environ['PATH'] = ffdir + os.pathsep + os.environ.get('PATH', '')
-            break
+
+    ffmpeg_ok = os.path.isfile(os.path.join(ffdir, 'ffmpeg.exe'))
+    ffprobe_ok = os.path.isfile(os.path.join(ffdir, 'ffprobe.exe'))
+
+    if ffmpeg_ok and ffprobe_ok:
+        os.environ['PATH'] = ffdir + os.pathsep + os.environ.get('PATH', '')
+    else:
+        print(f"⚠️ ffmpeg_bin tidak lengkap di: {ffdir}")
+        print(f"   ffmpeg.exe: {'✓' if ffmpeg_ok else '✗ HILANG'}")
+        print(f"   ffprobe.exe: {'✓' if ffprobe_ok else '✗ HILANG'}")
 
 _setup_ffmpeg()
 
