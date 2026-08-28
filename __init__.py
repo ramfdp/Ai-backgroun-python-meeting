@@ -37,31 +37,42 @@ def _audio_python() -> list[str]:
     raise RuntimeError("Dependency audio belum tersedia. Instal requirements.txt plugin terlebih dahulu.")
 
 
-def _launch_recorder() -> None:
+def _launch_script(script_name: str, title: str) -> None:
     if os.name != "nt":
-        raise RuntimeError("Perekaman Mic + Speaker tahap ini hanya mendukung Windows.")
-    script = ROOT / "audio_recorder.py"
+        raise RuntimeError("Fitur ini tahap ini hanya mendukung Windows.")
+    script = ROOT / script_name
     if not script.exists():
-        raise RuntimeError("audio_recorder.py tidak ditemukan di folder plugin.")
+        raise RuntimeError(f"{script_name} tidak ditemukan di folder plugin.")
     command = subprocess.list2cmdline(_audio_python() + [str(script)])
     subprocess.Popen(
-        ["cmd.exe", "/k", f"title Transkrip Meeting && {command}"],
+        ["cmd.exe", "/k", f"title {title} && {command}"],
         cwd=ROOT,
         creationflags=subprocess.CREATE_NEW_CONSOLE,
     )
 
 
-def handle_transkrip(raw_args: str = "", launch_recorder=None) -> str:
+def _launch_recorder() -> None:
+    _launch_script("audio_recorder.py", "Transkrip Meeting")
+
+
+def _launch_uploader() -> None:
+    _launch_script("upload_audio.py", "Upload Audio Meeting")
+
+
+def handle_transkrip(raw_args: str = "", launch_recorder=None, launch_uploader=None) -> str:
     choice = (raw_args or "").strip()
     if not choice:
         return MENU
-    if choice != "1":
-        return "Pilihan tersebut belum diaktifkan pada tahap ini. Gunakan `/transkrip 1`."
     try:
-        (launch_recorder or _launch_recorder)()
+        if choice == "1":
+            (launch_recorder or _launch_recorder)()
+            return "CMD rekaman dibuka. Tekan ESC atau CTRL+C di jendela tersebut untuk berhenti."
+        if choice == "2":
+            (launch_uploader or _launch_uploader)()
+            return "Window upload audio dibuka. Pilih file .wav/.mp3/.m4a."
+        return "Pilihan tersebut belum diaktifkan pada tahap ini. Gunakan `/transkrip 1` atau `/transkrip 2`."
     except Exception as error:
-        return f"Gagal membuka recorder: {error}"
-    return "CMD rekaman dibuka. Tekan ESC atau CTRL+C di jendela tersebut untuk berhenti."
+        return f"Gagal membuka pilihan {choice}: {error}"
 
 
 def register(ctx) -> None:

@@ -49,6 +49,15 @@ def test_option_one_launches_recorder():
     assert "CMD rekaman dibuka" in output
 
 
+def test_option_two_launches_audio_uploader():
+    launched = []
+
+    output = PLUGIN.handle_transkrip("2", launch_uploader=lambda: launched.append(True))
+
+    assert launched == [True]
+    assert "window upload audio dibuka" in output.lower()
+
+
 def test_audio_status_distinguishes_sound_from_silence():
     recorder = load_module("audio_recorder_for_test", "audio_recorder.py")
 
@@ -110,3 +119,39 @@ def test_processor_uses_deployed_prompts_without_custom_rewrite():
     assert "initial_prompt=TRANSCRIBE_PROMPT" in source
     assert 'prompt = f"{SUMMARIZE_PROMPT}\\n\\nTRANSKRIP LENGKAP TERSEDIA DI FILE:' in source
     assert "Jangan mengarang nama pembicara, keputusan" not in source
+
+
+def test_uploader_copies_supported_audio_then_processes_it():
+    uploader = load_module("audio_uploader_for_test", "upload_audio.py")
+
+    with tempfile.TemporaryDirectory() as directory:
+        base = Path(directory)
+        source = base / "meeting.m4a"
+        source.write_bytes(b"audio")
+        processed = []
+
+        result = uploader.import_and_process(
+            selected=source,
+            processor=lambda path: processed.append(path) or {"transcript": "ok"},
+            desktop=base / "Desktop",
+            now=datetime(2026, 8, 28, 10, 11, 12),
+        )
+
+        copied = base / "Desktop" / "Hermes Transkrip" / "Rekaman" / "Upload_20260828_101112_meeting.m4a"
+        assert copied.read_bytes() == b"audio"
+        assert processed == [copied]
+        assert result == {"transcript": "ok"}
+
+
+def test_uploader_rejects_unsupported_audio_extension():
+    uploader = load_module("audio_uploader_validation_test", "upload_audio.py")
+
+    with tempfile.TemporaryDirectory() as directory:
+        source = Path(directory) / "meeting.exe"
+        source.write_bytes(b"not audio")
+        try:
+            uploader.import_and_process(selected=source, desktop=Path(directory) / "Desktop")
+        except ValueError as error:
+            assert ".wav/.mp3/.m4a" in str(error)
+        else:
+            raise AssertionError("format tidak didukung harus ditolak")

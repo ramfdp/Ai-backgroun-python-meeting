@@ -1,6 +1,6 @@
 name: transkrip-meeting
-version: 0.2.0
-description: Rekam meeting, transkripsi lokal, dan analisis melalui provider aktif Hermes.
+version: 0.3.0
+description: Rekam atau upload audio meeting, transkripsi lokal, dan analisis melalui provider aktif Hermes.
 author: LAPI-PMO5
 provides_commands:
   - transkrip
