@@ -5,11 +5,52 @@ import threading
 import queue
 import keyboard # ponytail: minimal dependency for global 'esc' detection
 import warnings # ponytail: suppress annoying soundcard warnings
+import os
+from datetime import datetime
+from pathlib import Path
 
 warnings.filterwarnings("ignore", message="data discontinuity in recording")
 
-def record_audio_manual(filename="temp_meeting.wav"):
-    sample_rate = 16000 
+
+STORAGE_FOLDERS = ("Rekaman", "Hasil Tuning", "Transkrip", "Analisis Lengkap")
+
+
+def desktop_path():
+    if os.name == "nt":
+        try:
+            import winreg
+            key_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
+                value, _ = winreg.QueryValueEx(key, "Desktop")
+            return Path(os.path.expandvars(value))
+        except OSError:
+            pass
+    return Path.home() / "Desktop"
+
+
+def new_recording_path(desktop=None, now=None):
+    root = Path(desktop or desktop_path()) / "Hermes Transkrip"
+    for folder in STORAGE_FOLDERS:
+        (root / folder).mkdir(parents=True, exist_ok=True)
+    timestamp = (now or datetime.now()).strftime("%Y%m%d_%H%M%S")
+    return root / "Rekaman" / f"Meeting_{timestamp}.wav"
+
+
+def audio_status(mixed_data):
+    return "🔊 Suara terdeteksi...  " if np.max(np.abs(mixed_data)) > 0.05 else "⏳ Menunggu suara...    "
+
+
+def process_saved_recording(filename, processor=None):
+    if processor is None:
+        from hermes_processor import process_recording
+        processor = process_recording
+    return processor(Path(filename))
+
+
+def record_audio_manual(filename=None):
+    filename = Path(filename) if filename else new_recording_path()
+    filename.parent.mkdir(parents=True, exist_ok=True)
+    sample_rate = 16000
     channels = 1        
     chunk_size = 4000   
     
@@ -64,11 +105,8 @@ def record_audio_manual(filename="temp_meeting.wav"):
                 mixed_data = np.clip(mixed_data, -1.0, 1.0)
                 file.write(mixed_data)
 
-                # ponytail: simple inline log, no extra libs
-                if np.max(np.abs(mixed_data)) > 0.05:
-                    print("🔊 Suara terdeteksi...  ", end="\r", flush=True)
-                else:
-                    print("⏳ Menunggu suara...    ", end="\r", flush=True)
+                # ponytail: one threshold, independently testable
+                print(audio_status(mixed_data), end=chr(13), flush=True)
 
     except KeyboardInterrupt:
         print("\n[OK] Perekaman dihentikan manual oleh Anda.")
@@ -76,8 +114,17 @@ def record_audio_manual(filename="temp_meeting.wav"):
         
         t1.join()
         t2.join()
+        print(f"[OK] Rekaman tersimpan di: {filename.resolve()}")
+        try:
+            process_saved_recording(filename)
+        except Exception as e:
+            print(f"[ERROR] Rekaman aman, tetapi pemrosesan gagal: {e}")
         return True
     except Exception as e:
         print(f"\n[ERROR] Terjadi kesalahan saat mixing: {e}")
         is_recording = False
         return False
+
+
+if __name__ == "__main__":
+    record_audio_manual()

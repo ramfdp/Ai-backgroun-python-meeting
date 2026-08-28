@@ -1,5 +1,4 @@
-google-genai
-python-dotenv
+faster-whisper
 soundcard
 soundfile
 numpy

@@ -1,0 +1,14 @@
+name: transkrip-meeting
+version: 0.2.0
+description: Rekam meeting, transkripsi lokal, dan analisis melalui provider aktif Hermes.
+author: LAPI-PMO5
+provides_commands:
+  - transkrip
+pip_dependencies:
+  - soundcard
+  - soundfile
+  - numpy
+  - keyboard
+  - faster-whisper
+  - fpdf2
+  - python-docx

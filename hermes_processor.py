@@ -1,0 +1,89 @@
+from __future__ import annotations
+
+import shutil
+import subprocess
+from pathlib import Path
+
+from pdf_generator import save_to_pdf
+from prompts import SUMMARIZE_PROMPT, TRANSCRIBE_PROMPT
+from word_generator import export_to_word
+
+
+def _timestamp(seconds):
+    total = int(seconds)
+    hours, remainder = divmod(total, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"[{hours:02d}:{minutes:02d}:{seconds:02d}]" if hours else f"[{minutes:02d}:{seconds:02d}]"
+
+
+def transcribe_local(audio_path):
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError as exc:
+        raise RuntimeError("faster-whisper belum terpasang") from exc
+
+    print("\n⏳ Mentranskripsikan audio secara lokal...")
+    model = WhisperModel("small", device="cpu", compute_type="int8")
+    segments, _ = model.transcribe(
+        str(audio_path),
+        language="id",
+        vad_filter=True,
+        initial_prompt=TRANSCRIBE_PROMPT,
+    )
+    lines = [f"{_timestamp(segment.start)} {segment.text.strip()}" for segment in segments if segment.text.strip()]
+    return "\n".join(lines) or "SISTEM: Audio tidak terdeteksi atau terlalu bising."
+
+
+def analyze_with_hermes(transcript_path):
+    hermes = shutil.which("hermes")
+    if not hermes:
+        raise RuntimeError("CLI Hermes tidak ditemukan di PATH")
+
+    prompt = f"{SUMMARIZE_PROMPT}\n\nTRANSKRIP LENGKAP TERSEDIA DI FILE:\n{transcript_path}"
+    print("⏳ Menganalisis transkrip dengan provider aktif Hermes...")
+    result = subprocess.run(
+        [hermes, "-t", "file", "-z", prompt],
+        cwd=transcript_path.parent,
+        text=True,
+        capture_output=True,
+        timeout=3600,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or "Hermes gagal menganalisis transkrip")
+    if not result.stdout.strip():
+        raise RuntimeError("Hermes tidak menghasilkan analisis")
+    return result.stdout.strip()
+
+
+def process_recording(audio_path, transcribe=None, run_hermes=None):
+    audio_path = Path(audio_path).resolve()
+    if not audio_path.is_file():
+        raise FileNotFoundError(audio_path)
+
+    root = audio_path.parent.parent
+    transcript_dir = root / "Transkrip"
+    analysis_dir = root / "Analisis Lengkap"
+    transcript_dir.mkdir(parents=True, exist_ok=True)
+    analysis_dir.mkdir(parents=True, exist_ok=True)
+
+    transcript = (transcribe or transcribe_local)(audio_path)
+    transcript_path = transcript_dir / f"{audio_path.stem}.txt"
+    transcript_path.write_text(transcript, encoding="utf-8")
+
+    analysis = (run_hermes or analyze_with_hermes)(transcript_path)
+    analysis_txt = analysis_dir / f"{audio_path.stem}_Analisis.txt"
+    analysis_pdf = analysis_dir / f"{audio_path.stem}_Analisis.pdf"
+    analysis_docx = analysis_dir / f"{audio_path.stem}_Analisis.docx"
+    analysis_txt.write_text(analysis, encoding="utf-8")
+    save_to_pdf(analysis, filename=str(analysis_pdf))
+    export_to_word(analysis, filename=str(analysis_docx))
+
+    print("✅ Pemrosesan selesai.")
+    print(f"Transkrip: {transcript_path}")
+    print(f"Analisis: {analysis_dir}")
+    return {
+        "transcript": transcript_path,
+        "analysis_txt": analysis_txt,
+        "analysis_pdf": analysis_pdf,
+        "analysis_docx": analysis_docx,
+    }
