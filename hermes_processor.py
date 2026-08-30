@@ -34,25 +34,30 @@ def transcribe_local(audio_path):
     return "\n".join(lines) or "SISTEM: Audio tidak terdeteksi atau terlalu bising."
 
 
-def analyze_with_hermes(transcript_path):
+def run_hermes_prompt(prompt, input_path):
+    input_path = Path(input_path).resolve()
     hermes = shutil.which("hermes")
     if not hermes:
         raise RuntimeError("CLI Hermes tidak ditemukan di PATH")
 
-    prompt = f"{SUMMARIZE_PROMPT}\n\nTRANSKRIP LENGKAP TERSEDIA DI FILE:\n{transcript_path}"
-    print("⏳ Menganalisis transkrip dengan provider aktif Hermes...")
+    request = f"{prompt}\n\nFILE INPUT:\n{input_path}"
     result = subprocess.run(
-        [hermes, "-t", "file", "-z", prompt],
-        cwd=transcript_path.parent,
+        [hermes, "-t", "file", "-z", request],
+        cwd=input_path.parent,
         text=True,
         capture_output=True,
         timeout=3600,
     )
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or "Hermes gagal menganalisis transkrip")
+        raise RuntimeError(result.stderr.strip() or "Hermes gagal memproses file")
     if not result.stdout.strip():
-        raise RuntimeError("Hermes tidak menghasilkan analisis")
+        raise RuntimeError("Hermes tidak menghasilkan output")
     return result.stdout.strip()
+
+
+def analyze_with_hermes(transcript_path):
+    print("⏳ Menganalisis transkrip dengan provider aktif Hermes...")
+    return run_hermes_prompt(SUMMARIZE_PROMPT, transcript_path)
 
 
 def process_recording(audio_path, transcribe=None, run_hermes=None):

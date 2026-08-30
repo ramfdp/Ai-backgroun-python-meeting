@@ -58,6 +58,15 @@ def test_option_two_launches_audio_uploader():
     assert "window upload audio dibuka" in output.lower()
 
 
+def test_option_four_launches_pdf_analysis():
+    launched = []
+
+    output = PLUGIN.handle_transkrip("4", launch_pdf_analysis=lambda: launched.append(True))
+
+    assert launched == [True]
+    assert "window analisis pdf dibuka" in output.lower()
+
+
 def test_audio_status_distinguishes_sound_from_silence():
     recorder = load_module("audio_recorder_for_test", "audio_recorder.py")
 
@@ -117,7 +126,8 @@ def test_processor_uses_deployed_prompts_without_custom_rewrite():
     source = (ROOT / "hermes_processor.py").read_text(encoding="utf-8")
 
     assert "initial_prompt=TRANSCRIBE_PROMPT" in source
-    assert 'prompt = f"{SUMMARIZE_PROMPT}\\n\\nTRANSKRIP LENGKAP TERSEDIA DI FILE:' in source
+    assert "return run_hermes_prompt(SUMMARIZE_PROMPT, transcript_path)" in source
+    assert 'request = f"{prompt}\\n\\nFILE INPUT:' in source
     assert "Jangan mengarang nama pembicara, keputusan" not in source
 
 
@@ -155,3 +165,43 @@ def test_uploader_rejects_unsupported_audio_extension():
             assert ".wav/.mp3/.m4a" in str(error)
         else:
             raise AssertionError("format tidak didukung harus ditolak")
+
+
+def test_pdf_timeline_excludes_summary_and_pdf_decoration():
+    analysis = load_module("conversation_timeline_test", "conversation_analysis.py")
+    text = """Laporan Notulensi Meeting Otomatis
+Dibuat pada: 28/08/2026
+[00:01] Pembicara 1: Mulai rapat.
+[00:05] Pembicara 2: Baik.
+**KESIMPULAN:**
+Bagian ini tidak boleh masuk.
+"""
+
+    assert analysis.extract_timeline(text) == (
+        "[00:01] Pembicara 1: Mulai rapat.\n"
+        "[00:05] Pembicara 2: Baik."
+    )
+
+
+def test_pdf_analysis_writes_transcript_and_analysis_outputs():
+    analysis = load_module("conversation_pdf_test", "conversation_analysis.py")
+
+    with tempfile.TemporaryDirectory() as directory:
+        base = Path(directory)
+        source = base / "meeting.pdf"
+        from pdf_generator import save_to_pdf
+        save_to_pdf("[00:01] Pembicara 1: Mulai rapat.\n---\n**KESIMPULAN:**\nSelesai.", str(source))
+
+        result = analysis.analyze_pdf_conversation(
+            selected=source,
+            analyzer=lambda path: "**RINGKASAN EKSEKUTIF:**\nRapat dimulai.",
+            desktop=base / "Desktop",
+            now=datetime(2026, 8, 28, 12, 13, 14),
+        )
+
+        root = base / "Desktop" / "Hermes Transkrip"
+        assert result["conversation_txt"] == root / "Transkrip" / "Conversation_Analysis_20260828_121314_conversation.txt"
+        assert "[00:01] Pembicara 1" in result["conversation_txt"].read_text(encoding="utf-8")
+        assert result["analysis_txt"].is_file()
+        assert result["analysis_pdf"].is_file()
+        assert result["analysis_docx"].is_file()
