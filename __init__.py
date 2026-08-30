@@ -90,7 +90,9 @@ def handle_transkrip(
         if choice == "4":
             (launch_pdf_analysis or _launch_pdf_analysis)()
             return "Window analisis PDF dibuka. Pilih file .pdf."
-        return "Pilihan tidak valid. Gunakan `/transkrip 1` sampai `/transkrip 4`."
+        if choice == "5":
+            return "Operasi transkrip dibatalkan."
+        return "Pilihan tidak valid. Gunakan `/transkrip 1` sampai `/transkrip 5`."
     except Exception as error:
         return f"Gagal membuka pilihan {choice}: {error}"
 
