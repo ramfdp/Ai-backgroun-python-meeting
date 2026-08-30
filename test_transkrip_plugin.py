@@ -58,6 +58,15 @@ def test_option_two_launches_audio_uploader():
     assert "window upload audio dibuka" in output.lower()
 
 
+def test_option_three_launches_audio_compressor():
+    launched = []
+
+    output = PLUGIN.handle_transkrip("3", launch_compressor=lambda: launched.append(True))
+
+    assert launched == [True]
+    assert "window kompresi audio dibuka" in output.lower()
+
+
 def test_option_four_launches_pdf_analysis():
     launched = []
 
@@ -165,6 +174,29 @@ def test_uploader_rejects_unsupported_audio_extension():
             assert ".wav/.mp3/.m4a" in str(error)
         else:
             raise AssertionError("format tidak didukung harus ditolak")
+
+
+def test_compressor_saves_tuned_audio_then_uses_shared_processor():
+    compressor = load_module("audio_compressor_for_test", "audio_compressor.py")
+
+    with tempfile.TemporaryDirectory() as directory:
+        base = Path(directory)
+        source = base / "meeting.wav"
+        source.write_bytes(b"audio")
+        processed = []
+
+        result = compressor.compress_and_process(
+            selected=source,
+            desktop=base / "Desktop",
+            now=datetime(2026, 8, 30, 10, 11, 12),
+            tuner=lambda _, output: output.write_bytes(b"tuned"),
+            processor=lambda path: processed.append(path) or {"transcript": "ok"},
+        )
+
+        tuned = base / "Desktop" / "Hermes Transkrip" / "Hasil Tuning" / "Tuning_20260830_101112_meeting.mp3"
+        assert tuned.read_bytes() == b"tuned"
+        assert processed == [tuned]
+        assert result == {"transcript": "ok"}
 
 
 def test_pdf_timeline_excludes_summary_and_pdf_decoration():

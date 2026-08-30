@@ -59,6 +59,10 @@ def _launch_uploader() -> None:
     _launch_script("upload_audio.py", "Upload Audio Meeting")
 
 
+def _launch_compressor() -> None:
+    _launch_script("audio_compressor.py", "Kompresi Audio Meeting")
+
+
 def _launch_pdf_analysis() -> None:
     _launch_script("conversation_analysis.py", "Analisis Percakapan PDF")
 
@@ -67,6 +71,7 @@ def handle_transkrip(
     raw_args: str = "",
     launch_recorder=None,
     launch_uploader=None,
+    launch_compressor=None,
     launch_pdf_analysis=None,
 ) -> str:
     choice = (raw_args or "").strip()
@@ -79,10 +84,13 @@ def handle_transkrip(
         if choice == "2":
             (launch_uploader or _launch_uploader)()
             return "Window upload audio dibuka. Pilih file .wav/.mp3/.m4a."
+        if choice == "3":
+            (launch_compressor or _launch_compressor)()
+            return "Window kompresi audio dibuka. Pilih file audio."
         if choice == "4":
             (launch_pdf_analysis or _launch_pdf_analysis)()
             return "Window analisis PDF dibuka. Pilih file .pdf."
-        return "Pilihan tersebut belum diaktifkan pada tahap ini. Gunakan `/transkrip 1`, `/transkrip 2`, atau `/transkrip 4`."
+        return "Pilihan tidak valid. Gunakan `/transkrip 1` sampai `/transkrip 4`."
     except Exception as error:
         return f"Gagal membuka pilihan {choice}: {error}"
 

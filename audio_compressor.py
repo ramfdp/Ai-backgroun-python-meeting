@@ -1,15 +1,17 @@
-import sys
 import noisereduce as nr
 from pydub import AudioSegment
 from pydub.effects import normalize
 import numpy as np
-import os
 from datetime import datetime
+from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog
-from gemini_processor import process_meeting_audio
-from pdf_generator import save_to_pdf
-from word_generator import export_to_word
+
+from audio_recorder import STORAGE_FOLDERS, desktop_path
+from hermes_processor import process_recording
+
+
+SUPPORTED_AUDIO = {".wav", ".mp3", ".m4a", ".flac", ".ogg"}
 
 
 def tingkatkan_vokal_dan_simpan(file_input, file_output):
@@ -40,40 +42,40 @@ def tingkatkan_vokal_dan_simpan(file_input, file_output):
     print(f"🎉 Selesai! Audio dengan vokal tebal dan jelas tersimpan di: {file_output}")
 
 
-def main():
+def compress_and_process(selected=None, processor=None, desktop=None, now=None, tuner=None):
     print("Membuka jendela untuk memilih file...")
-    root = tk.Tk()
-    root.withdraw()
-    file_rekaman_hp = filedialog.askopenfilename(
-        title="Pilih file audio",
-        filetypes=[
-            ("Audio Files", "*.wav *.mp3 *.m4a *.flac *.ogg"),
-            ("All Files", "*.*"),
-        ],
-    )
+    if selected is None:
+        window = tk.Tk()
+        window.withdraw()
+        try:
+            selected = filedialog.askopenfilename(
+                title="Pilih file audio",
+                filetypes=[("Audio Files", "*.wav *.mp3 *.m4a *.flac *.ogg")],
+            )
+        finally:
+            window.destroy()
 
-    if not file_rekaman_hp:
+    if not selected:
         print("❌ Batal memilih file.")
-        return 
+        return None
 
-    hasil_vokal_jelas = "output-sound-dituning.mp3"
-    tingkatkan_vokal_dan_simpan(file_rekaman_hp, hasil_vokal_jelas)
+    source = Path(selected)
+    if not source.is_file():
+        raise FileNotFoundError(source)
+    if source.suffix.lower() not in SUPPORTED_AUDIO:
+        raise ValueError("Format audio harus .wav/.mp3/.m4a/.flac/.ogg")
 
-    print("\n⏳ Sedang memproses dengan Gemini AI...")
-    hasil_ai = process_meeting_audio(hasil_vokal_jelas)
+    root = Path(desktop or desktop_path()) / "Hermes Transkrip"
+    for folder in STORAGE_FOLDERS:
+        (root / folder).mkdir(parents=True, exist_ok=True)
+    stamp = (now or datetime.now()).strftime("%Y%m%d_%H%M%S")
+    tuned = root / "Hasil Tuning" / f"Tuning_{stamp}_{source.stem}.mp3"
+    (tuner or tingkatkan_vokal_dan_simpan)(source, tuned)
+    return (processor or process_recording)(tuned)
 
-    os.makedirs("Hasil_Notulensi", exist_ok=True)
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    pdf_path = os.path.join("Hasil_Notulensi", f"Meeting_{timestamp}.pdf")
-    word_path = os.path.join("Hasil_Notulensi", f"Meeting_{timestamp}.docx")
-    
-    save_to_pdf(hasil_ai, filename=pdf_path)
-    export_to_word(hasil_ai, filename=word_path)
 
-    print(
-        f"\n✅ PROSES SELESAI!\nFile PDF Anda berhasil disimpan di:\n-> {os.path.abspath(pdf_path)}\n"
-        f"File Word Anda berhasil disimpan di:\n-> {os.path.abspath(word_path)}"
-    )
+def main():
+    return compress_and_process()
 
 if __name__ == "__main__":
     main()
