@@ -79,10 +79,10 @@ def analyze_pdf_conversation(selected=None, analyzer=None, desktop=None, now=Non
 
     stamp = (now or datetime.now()).strftime("%Y%m%d_%H%M%S")
     name = f"Conversation_Analysis_{stamp}"
-    conversation_txt = root / "Transkrip" / f"{name}_conversation.txt"
-    conversation_txt.write_text(conversation, encoding="utf-8")
+    conversation_pdf = root / "Transkrip" / f"{name}_conversation.pdf"
+    save_to_pdf(conversation, filename=str(conversation_pdf))
 
-    analysis = (analyzer or analyze_with_hermes)(conversation_txt)
+    analysis = (analyzer or analyze_with_hermes)(conversation_pdf)
     analysis_dir = root / "Analisis Lengkap"
     analysis_txt = analysis_dir / f"{name}.txt"
     analysis_pdf = analysis_dir / f"{name}.pdf"
@@ -92,9 +92,9 @@ def analyze_pdf_conversation(selected=None, analyzer=None, desktop=None, now=Non
     export_to_word(analysis, filename=str(analysis_docx))
 
     print(f"\nAnalisis selesai:\n-> {analysis_txt}\n-> {analysis_pdf}\n-> {analysis_docx}")
-    print(f"Teks percakapan:\n-> {conversation_txt}")
+    print(f"Percakapan:\n-> {conversation_pdf}")
     return {
-        "conversation_txt": conversation_txt,
+        "conversation_pdf": conversation_pdf,
         "analysis_txt": analysis_txt,
         "analysis_pdf": analysis_pdf,
         "analysis_docx": analysis_docx,

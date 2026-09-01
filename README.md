@@ -1,6 +1,6 @@
 # Transkrip Meeting — Plugin Hermes
 
-Plugin Hermes untuk merekam atau mengimpor audio meeting, membuat transkrip lokal, menganalisisnya melalui provider aktif Hermes, serta mengekspor hasil ke TXT, PDF, dan DOCX.
+Plugin Hermes untuk merekam atau mengimpor audio meeting, membuat transkrip lokal dalam format PDF, menganalisisnya melalui provider aktif Hermes, serta mengekspor hasil analisis ke TXT, PDF, dan DOCX.
 
 ## Persyaratan
 
@@ -76,7 +76,7 @@ Hermes membuka jendela CMD dan merekam suara mikrofon serta speaker. Tekan `ESC`
 /transkrip 2
 ```
 
-Pilih file `.wav`, `.mp3`, atau `.m4a`. Plugin menyalin audio ke folder penyimpanan, membuat transkrip lokal, lalu menghasilkan analisis melalui Hermes.
+Pilih file `.wav`, `.mp3`, atau `.m4a`. Plugin menyalin audio ke folder penyimpanan, membuat transkrip lokal dalam format PDF, lalu menghasilkan analisis melalui Hermes.
 
 ### Pilihan 3 — Reduksi noise dan buat notulensi
 
@@ -98,7 +98,7 @@ Pilih file `.wav`, `.mp3`, `.m4a`, `.flac`, atau `.ogg`. Plugin akan:
 /transkrip 4
 ```
 
-Pilih PDF hasil transkrip yang memiliki percakapan bertimestamp. Plugin mengekstrak percakapan, menganalisisnya melalui provider aktif Hermes, lalu membuat hasil TXT, PDF, dan DOCX.
+Pilih PDF hasil transkrip yang memiliki percakapan bertimestamp. PDF dari pilihan 1, 2, atau 3 dapat langsung digunakan pada pilihan ini. Plugin mengekstrak percakapan ke PDF baru, menganalisisnya melalui provider aktif Hermes, lalu membuat hasil analisis TXT, PDF, dan DOCX.
 
 ### Pilihan 5 — Batalkan operasi
 
@@ -122,7 +122,7 @@ Desktop\Hermes Transkrip\
 
 - `Rekaman`: audio hasil rekaman atau impor.
 - `Hasil Tuning`: audio pilihan 3 setelah reduksi noise.
-- `Transkrip`: hasil transkripsi dalam format TXT.
+- `Transkrip`: seluruh hasil transkripsi dan ekstraksi percakapan dalam format PDF; hasil pilihan 1–3 dapat digunakan langsung pada pilihan 4.
 - `Analisis Lengkap`: hasil analisis dalam format TXT, PDF, dan DOCX.
 
 ## Memperbarui plugin

@@ -72,8 +72,8 @@ def process_recording(audio_path, transcribe=None, run_hermes=None):
     analysis_dir.mkdir(parents=True, exist_ok=True)
 
     transcript = (transcribe or transcribe_local)(audio_path)
-    transcript_path = transcript_dir / f"{audio_path.stem}.txt"
-    transcript_path.write_text(transcript, encoding="utf-8")
+    transcript_path = transcript_dir / f"{audio_path.stem}.pdf"
+    save_to_pdf(transcript, filename=str(transcript_path))
 
     analysis = (run_hermes or analyze_with_hermes)(transcript_path)
     analysis_txt = analysis_dir / f"{audio_path.stem}_Analisis.txt"
