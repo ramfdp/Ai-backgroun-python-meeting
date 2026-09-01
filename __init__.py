@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 import sys
@@ -55,49 +54,33 @@ def ensure_dependencies(run=None, uv=None) -> None:
     print("[transkrip-meeting] Instalasi selesai. /transkrip siap digunakan.")
 
 
-def _audio_python() -> list[str]:
-    candidates = [[sys.executable]]
-    if os.name == "nt":
-        candidates += [["py", f"-{version}"] for version in ("3.11", "3.12", "3.10", "3.14")]
-    for candidate in candidates:
-        probe = subprocess.run(
-            candidate + ["-c", "import soundcard, soundfile, numpy, keyboard"],
-            capture_output=True,
-            timeout=10,
-        )
-        if probe.returncode == 0:
-            return candidate
-    raise RuntimeError("Dependency audio belum tersedia. Instal requirements.txt plugin terlebih dahulu.")
-
-
-def _launch_script(script_name: str, title: str) -> None:
-    if os.name != "nt":
+def _launch_script(script_name: str) -> None:
+    if sys.platform != "win32":
         raise RuntimeError("Fitur ini tahap ini hanya mendukung Windows.")
     script = ROOT / script_name
     if not script.exists():
         raise RuntimeError(f"{script_name} tidak ditemukan di folder plugin.")
-    command = subprocess.list2cmdline(_audio_python() + [str(script)])
     subprocess.Popen(
-        ["cmd.exe", "/k", f"title {title} && {command}"],
+        [sys.executable, str(script)],
         cwd=ROOT,
         creationflags=subprocess.CREATE_NEW_CONSOLE,
     )
 
 
 def _launch_recorder() -> None:
-    _launch_script("audio_recorder.py", "Transkrip Meeting")
+    _launch_script("audio_recorder.py")
 
 
 def _launch_uploader() -> None:
-    _launch_script("upload_audio.py", "Upload Audio Meeting")
+    _launch_script("upload_audio.py")
 
 
 def _launch_compressor() -> None:
-    _launch_script("audio_compressor.py", "Kompresi Audio Meeting")
+    _launch_script("audio_compressor.py")
 
 
 def _launch_pdf_analysis() -> None:
-    _launch_script("conversation_analysis.py", "Analisis Percakapan PDF")
+    _launch_script("conversation_analysis.py")
 
 
 def handle_transkrip(

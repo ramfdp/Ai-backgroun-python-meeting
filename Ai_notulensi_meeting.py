@@ -31,7 +31,7 @@ from conversation_analysis import analyze_pdf_conversation
 
 
 def bersihkan_layar():
-    os.system("cls" if os.name == "nt" else "clear")
+    print("\033[2J\033[H", end="")
 
 
 def tunggu():
