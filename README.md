@@ -23,11 +23,26 @@ hermes plugins install ramfdp/Ai-backgroun-python-meeting --enable
 Perintah tersebut akan:
 
 1. Mengunduh plugin dari GitHub.
-2. Memasang dependensi yang tercantum di `plugin.yaml`.
-3. Mengaktifkan plugin secara otomatis.
-4. Menambahkan perintah `/transkrip` ke Hermes.
+2. Mengaktifkan plugin secara otomatis.
+3. Menambahkan perintah `/transkrip` ke Hermes.
 
-Setelah selesai, tutup dan buka kembali Hermes agar plugin dimuat pada sesi baru.
+Setelah instalasi, tutup dan buka kembali Hermes. Pada sesi baru, plugin otomatis memeriksa seluruh dependency di `requirements.txt`. Dependency yang belum tersedia akan dipasang ke environment Python Hermes sebelum `/transkrip` digunakan.
+
+Tunggu sampai muncul:
+
+```text
+[transkrip-meeting] Instalasi selesai. /transkrip siap digunakan.
+```
+
+Jika seluruh dependency sudah tersedia, pemeriksaan dilewati sehingga startup berikutnya tidak mengunduh ulang paket.
+
+### Cara kerja pemasangan dependency
+
+- Plugin memeriksa modul yang diperlukan saat diregistrasikan pada sesi Hermes baru.
+- Jika ada yang belum tersedia, plugin menjalankan `uv pip install` terhadap Python environment yang sedang menjalankan Hermes.
+- Jika `uv` tidak ditemukan, plugin mencoba fallback `ensurepip` dan `pip`.
+- Instalasi wajib selesai dan seluruh modul wajib dapat ditemukan sebelum fitur transkrip diizinkan berjalan.
+- Kegagalan disimpan sebagai status plugin dan ditampilkan melalui `/transkrip`; fitur tidak dijalankan dalam kondisi setengah terpasang.
 
 ## Verifikasi instalasi
 
@@ -44,6 +59,8 @@ Buka Hermes, kemudian tampilkan menu plugin:
 ```text
 /transkrip
 ```
+
+Jika instalasi dependency berhasil, menu diawali pesan `Plugin transkrip siap digunakan`. Jika gagal, `/transkrip` menampilkan penyebabnya dan tidak menjalankan fitur yang belum siap.
 
 ### Pilihan 1 — Rekam meeting langsung
 
@@ -136,17 +153,86 @@ Hapus plugin:
 hermes plugins uninstall transkrip-meeting
 ```
 
-## Pemecahan masalah singkat
+## Penanganan masalah
 
-Periksa apakah plugin aktif:
+### `/transkrip` tidak ditemukan
+
+1. Pastikan plugin terpasang dan aktif:
+
+   ```bash
+   hermes plugins list --user
+   ```
+
+2. Jika statusnya belum aktif:
+
+   ```bash
+   hermes plugins enable transkrip-meeting
+   ```
+
+3. Tutup seluruh sesi Hermes, lalu buka sesi baru.
+
+### Muncul `Plugin transkrip belum siap`
+
+Pesan tersebut berarti instalasi dependency gagal atau belum lengkap. Pastikan koneksi internet aktif dan ruang disk tersedia, tutup seluruh sesi Hermes, lalu jalankan:
+
+```bash
+hermes doctor --fix
+hermes plugins update transkrip-meeting
+```
+
+Buka Hermes kembali dan tunggu pemeriksaan dependency selesai. Jalankan `/transkrip` untuk melihat status terbaru.
+
+### Update tidak memperbaiki dependency
+
+Lakukan instalasi ulang bersih:
+
+```bash
+hermes plugins install ramfdp/Ai-backgroun-python-meeting --force --enable
+```
+
+Kemudian buka sesi Hermes baru. File hasil meeting di `Desktop\Hermes Transkrip` tidak berada di folder instalasi plugin sehingga tidak ikut terhapus saat reinstall.
+
+### Instalasi berhenti saat mengunduh paket
+
+- Pastikan firewall/proxy mengizinkan akses GitHub, PyPI, dan Hugging Face.
+- Jangan tutup Hermes selama proses instalasi berlangsung.
+- Model Whisper lokal diunduh saat pertama kali audio ditranskripsikan; proses pertama dapat lebih lama.
+- Jika muncul masalah file sedang digunakan atau permission denied, tutup seluruh proses Hermes lalu ulangi reinstall dari terminal yang memiliki hak tulis ke folder pengguna.
+
+### Perekaman langsung tidak menangkap suara
+
+- Pastikan Windows mengizinkan akses mikrofon untuk aplikasi desktop.
+- Pastikan mikrofon dan speaker default sudah benar.
+- Gunakan pilihan 2 untuk menguji pipeline dengan file audio yang sudah tersedia.
+
+### Audio pilihan 2 atau 3 gagal dibaca
+
+- Pastikan ekstensi sesuai format yang didukung.
+- Pastikan file tidak rusak dan tidak sedang dikunci aplikasi lain.
+- Pilihan 2 menerima `.wav`, `.mp3`, dan `.m4a`.
+- Pilihan 3 menerima `.wav`, `.mp3`, `.m4a`, `.flac`, dan `.ogg`.
+
+### Analisis Hermes gagal
+
+Pastikan provider/model Hermes aktif dan dapat digunakan:
+
+```bash
+hermes status --all
+hermes doctor
+```
+
+Transkrip atau rekaman yang sudah berhasil dibuat tetap disimpan meskipun tahap analisis gagal.
+
+### Melihat error Hermes
+
+```bash
+hermes logs errors
+```
+
+Pemeriksaan umum:
 
 ```bash
 hermes plugins list --user
-```
-
-Periksa kondisi Hermes:
-
-```bash
 hermes doctor
 ```
 
