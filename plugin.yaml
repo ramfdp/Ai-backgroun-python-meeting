@@ -1,6 +1,6 @@
 name: transkrip-meeting
-version: 0.7.1
-description: Rekam/upload audio dan analisis percakapan PDF melalui provider aktif Hermes.
+version: 0.8.0
+description: Rekam/upload audio dan analisis transkrip TXT melalui provider aktif Hermes.
 author: LAPI-PMO5
 provides_commands:
   - transkrip
@@ -14,4 +14,3 @@ pip_dependencies:
   - noisereduce
   - fpdf2
   - python-docx
-  - pypdf

@@ -72,10 +72,12 @@ def process_recording(audio_path, transcribe=None, run_hermes=None):
     analysis_dir.mkdir(parents=True, exist_ok=True)
 
     transcript = (transcribe or transcribe_local)(audio_path)
-    transcript_path = transcript_dir / f"{audio_path.stem}.pdf"
-    save_to_pdf(transcript, filename=str(transcript_path))
+    transcript_txt = transcript_dir / f"{audio_path.stem}.txt"
+    transcript_pdf = transcript_dir / f"{audio_path.stem}.pdf"
+    transcript_txt.write_text(transcript, encoding="utf-8")
+    save_to_pdf(transcript, filename=str(transcript_pdf))
 
-    analysis = (run_hermes or analyze_with_hermes)(transcript_path)
+    analysis = (run_hermes or analyze_with_hermes)(transcript_txt)
     analysis_txt = analysis_dir / f"{audio_path.stem}_Analisis.txt"
     analysis_pdf = analysis_dir / f"{audio_path.stem}_Analisis.pdf"
     analysis_docx = analysis_dir / f"{audio_path.stem}_Analisis.docx"
@@ -84,10 +86,11 @@ def process_recording(audio_path, transcribe=None, run_hermes=None):
     export_to_word(analysis, filename=str(analysis_docx))
 
     print("✅ Pemrosesan selesai.")
-    print(f"Transkrip: {transcript_path}")
+    print(f"Transkrip:\n-> {transcript_txt}\n-> {transcript_pdf}")
     print(f"Analisis: {analysis_dir}")
     return {
-        "transcript": transcript_path,
+        "transcript_txt": transcript_txt,
+        "transcript_pdf": transcript_pdf,
         "analysis_txt": analysis_txt,
         "analysis_pdf": analysis_pdf,
         "analysis_docx": analysis_docx,

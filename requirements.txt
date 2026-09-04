@@ -7,4 +7,3 @@ keyboard
 pydub
 noisereduce
 python-docx
-pypdf

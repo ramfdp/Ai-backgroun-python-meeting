@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import re
 from datetime import datetime
 from pathlib import Path
-
-from pypdf import PdfReader
 
 from audio_recorder import STORAGE_FOLDERS, desktop_path
 from conversation_analysis_prompt import CONVERSATION_ANALYSIS_PROMPT
@@ -12,29 +9,7 @@ from hermes_processor import run_hermes_prompt
 from pdf_generator import save_to_pdf
 from word_generator import export_to_word
 
-TIMESTAMP = re.compile(r"^\[(?:\d{1,2}:)?\d{1,2}:\d{2}\]")
-PDF_DECORATION = re.compile(r"^(Laporan Notulensi|Dibuat pada:|Halaman \d+)", re.I)
-
-
-def extract_timeline(text):
-    conversation = []
-    started = False
-
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        marker = line.strip("*# ").upper()
-        if TIMESTAMP.match(line):
-            started = True
-            conversation.append(line)
-        elif started and (line == "---" or marker.startswith(("KESIMPULAN:", "ACTION ITEMS:"))):
-            break
-        elif started and line and not PDF_DECORATION.match(line):
-            conversation.append(line)
-
-    return "\n".join(conversation)
-
-
-def choose_pdf_file():
+def choose_txt_file():
     import tkinter as tk
     from tkinter import filedialog
 
@@ -43,9 +18,9 @@ def choose_pdf_file():
     root.attributes("-topmost", True)
     try:
         return filedialog.askopenfilename(
-            title="Pilih PDF transkrip meeting",
+            title="Pilih TXT transkrip meeting",
             parent=root,
-            filetypes=[("PDF Files", "*.pdf")],
+            filetypes=[("Text Files", "*.txt")],
         )
     finally:
         root.destroy()
@@ -56,22 +31,19 @@ def analyze_with_hermes(conversation_path):
     return run_hermes_prompt(CONVERSATION_ANALYSIS_PROMPT, conversation_path)
 
 
-def analyze_pdf_conversation(selected=None, analyzer=None, desktop=None, now=None):
-    selected = selected or choose_pdf_file()
+def analyze_txt_conversation(selected=None, analyzer=None, desktop=None, now=None):
+    selected = selected or choose_txt_file()
     if not selected:
         print("Batal memilih file.")
         return None
 
-    pdf_path = Path(selected)
-    if not pdf_path.is_file():
-        raise FileNotFoundError(pdf_path)
-    if pdf_path.suffix.lower() != ".pdf":
-        raise ValueError("Format file harus .pdf")
-
-    pdf_text = "\n".join(page.extract_text() or "" for page in PdfReader(pdf_path).pages)
-    conversation = extract_timeline(pdf_text)
-    if not conversation:
-        raise ValueError("Tidak ditemukan percakapan dengan format timestamp [MM:SS] di PDF.")
+    conversation_path = Path(selected)
+    if not conversation_path.is_file():
+        raise FileNotFoundError(conversation_path)
+    if conversation_path.suffix.lower() != ".txt":
+        raise ValueError("Format file harus .txt")
+    if not conversation_path.read_text(encoding="utf-8").strip():
+        raise ValueError("File transkrip kosong.")
 
     root = Path(desktop or desktop_path()) / "Hermes Transkrip"
     for folder in STORAGE_FOLDERS:
@@ -79,10 +51,7 @@ def analyze_pdf_conversation(selected=None, analyzer=None, desktop=None, now=Non
 
     stamp = (now or datetime.now()).strftime("%Y%m%d_%H%M%S")
     name = f"Conversation_Analysis_{stamp}"
-    conversation_pdf = root / "Transkrip" / f"{name}_conversation.pdf"
-    save_to_pdf(conversation, filename=str(conversation_pdf))
-
-    analysis = (analyzer or analyze_with_hermes)(conversation_pdf)
+    analysis = (analyzer or analyze_with_hermes)(conversation_path)
     analysis_dir = root / "Analisis Lengkap"
     analysis_txt = analysis_dir / f"{name}.txt"
     analysis_pdf = analysis_dir / f"{name}.pdf"
@@ -92,9 +61,8 @@ def analyze_pdf_conversation(selected=None, analyzer=None, desktop=None, now=Non
     export_to_word(analysis, filename=str(analysis_docx))
 
     print(f"\nAnalisis selesai:\n-> {analysis_txt}\n-> {analysis_pdf}\n-> {analysis_docx}")
-    print(f"Percakapan:\n-> {conversation_pdf}")
     return {
-        "conversation_pdf": conversation_pdf,
+        "conversation_txt": conversation_path,
         "analysis_txt": analysis_txt,
         "analysis_pdf": analysis_pdf,
         "analysis_docx": analysis_docx,
@@ -103,6 +71,6 @@ def analyze_pdf_conversation(selected=None, analyzer=None, desktop=None, now=Non
 
 if __name__ == "__main__":
     try:
-        analyze_pdf_conversation()
+        analyze_txt_conversation()
     except Exception as error:
-        print(f"[ERROR] Analisis PDF gagal: {error}")
+        print(f"[ERROR] Analisis TXT gagal: {error}")

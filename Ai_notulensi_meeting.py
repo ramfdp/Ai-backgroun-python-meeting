@@ -27,7 +27,7 @@ _setup_ffmpeg()
 from main import main as jalankan_rekaman
 from upload import upload_audio as jalankan_upload
 from audio_compressor import main as jalankan_kompresi
-from conversation_analysis import analyze_pdf_conversation
+from conversation_analysis import analyze_txt_conversation
 
 
 def bersihkan_layar():
@@ -47,7 +47,7 @@ def main():
         print("1. Mulai Rekam Meeting (Live AI)")
         print("2. Upload File Audio (.wav/.mp3/.m4a) Manual")
         print("3. Kompresi Suara Noise dan Generate Notulensi")
-        print("4. Analisis Lengkap Percakapan dari PDF")
+        print("4. Analisis Lengkap Percakapan dari TXT")
         print("5. Keluar Aplikasi")
         print("=" * 65)
 
@@ -67,7 +67,7 @@ def main():
                 tunggu()
 
             elif pilihan == "4":
-                analyze_pdf_conversation()
+                analyze_txt_conversation()
                 tunggu()
 
             elif pilihan == "5":

@@ -9,7 +9,7 @@ import importlib.util
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-REQUIRED_IMPORTS = ("faster_whisper", "soundcard", "soundfile", "numpy", "fpdf", "keyboard", "pydub", "noisereduce", "docx", "pypdf")
+REQUIRED_IMPORTS = ("faster_whisper", "soundcard", "soundfile", "numpy", "fpdf", "keyboard", "pydub", "noisereduce", "docx")
 _SETUP_ERROR = None
 MENU = """## Transkrip Meeting
 
@@ -18,7 +18,7 @@ Silakan pilih layanan:
 1. **Mulai Rekam Meeting (Live AI)**
 2. **Upload File Audio (.wav/.mp3/.m4a) Manual**
 3. **Kompresi Suara Noise dan Generate Notulensi**
-4. **Analisis Lengkap Percakapan dari PDF**
+4. **Analisis Lengkap Percakapan dari TXT**
 5. **Keluar transkrip**
 
 Jalankan `/transkrip 1` sampai `/transkrip 5` sesuai pilihan.
@@ -79,7 +79,7 @@ def _launch_compressor() -> None:
     _launch_script("audio_compressor.py")
 
 
-def _launch_pdf_analysis() -> None:
+def _launch_txt_analysis() -> None:
     _launch_script("conversation_analysis.py")
 
 
@@ -88,7 +88,7 @@ def handle_transkrip(
     launch_recorder=None,
     launch_uploader=None,
     launch_compressor=None,
-    launch_pdf_analysis=None,
+    launch_txt_analysis=None,
 ) -> str:
     if _SETUP_ERROR:
         return f"Plugin transkrip belum siap: {_SETUP_ERROR}"
@@ -106,8 +106,8 @@ def handle_transkrip(
             (launch_compressor or _launch_compressor)()
             return "Window kompresi audio dibuka. Pilih file audio."
         if choice == "4":
-            (launch_pdf_analysis or _launch_pdf_analysis)()
-            return "Window analisis PDF dibuka. Pilih file .pdf."
+            (launch_txt_analysis or _launch_txt_analysis)()
+            return "Window analisis TXT dibuka. Pilih file .txt."
         if choice == "5":
             return "Operasi transkrip dibatalkan."
         return "Pilihan tidak valid. Gunakan `/transkrip 1` sampai `/transkrip 5`."
